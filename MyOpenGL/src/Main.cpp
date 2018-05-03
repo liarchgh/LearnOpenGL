@@ -206,7 +206,7 @@ int main() {
 	vector<Shader>shaders;
 	GLchar vertexFile[] = "src/MyUtil/vertex.hlsl", fragmentFile[] = "src/MyUtil/fragment.hlsl";
 	shaders.push_back(*(new Shader(vertexFile, fragmentFile)));
-	//shaders.push_back(*(new Shader(vertexFile, fragmentFile)));
+	shaders.push_back(*(new Shader(vertexFile, fragmentFile)));
 
 	//将纹理单元和着色器联系起来
 	for(int i = 0; i < shaders.size(); ++i){
@@ -234,15 +234,20 @@ int main() {
 		//模型矩阵
 		vector<glm::mat4>models;
 		glm::mat4 *tempTrans = new glm::mat4(1.0f);
-		*tempTrans = glm::translate(*tempTrans, glm::vec3(0.0f, 0.0f, -1.0f));
 		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(1.0f, 0.0f, 0.0f));
 		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(0.0f, 1.0f, 0.0f));
+		*tempTrans = glm::translate(*tempTrans, glm::vec3(0.0f, 0.0f, -3.0f));
+		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(1.0f, 0.0f, 0.0f));
 		models.push_back(*tempTrans);
 
-		//tempTrans = new glm::mat4(1.0f);
-		//*tempTrans = glm::translate(*tempTrans, glm::vec3(-0.4f, -0.4f, 0.0f));
-		//*tempTrans = glm::scale(*tempTrans, glm::vec3(sin(timeValue)/4+0.5f, sin(timeValue)/4+0.5f, 0.0f));
-		//models.push_back(*tempTrans);
+		tempTrans = new glm::mat4(1.0f);
+		*tempTrans = glm::translate(*tempTrans, glm::vec3(0.0f, 0.0f, -4.0f));
+		float rot = sin(timeValue * 4) + 2;
+		*tempTrans = glm::scale(*tempTrans, glm::vec3(rot, rot, rot));
+		*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+		*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(0.0f, 1.0f, 0.0f));
+		models.push_back(*tempTrans);
 
 		for(int i = 0; i < shaders.size(); ++i){
 			shaders[i].use();
