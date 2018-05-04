@@ -178,9 +178,9 @@ int main() {
 	for (int i = 1; i <= 5; ++i) {
 		for (int j = 0; j < 6; ++j) {
 			indices.push_back(indices[j] + 4 * i);
-			cout << indices[indices.size() - 1] << '\t';
+			//cout << indices[indices.size() - 1] << '\t';
 		}
-		cout << endl;
+		//cout << endl;
 	}
 
 	unsigned int VAO, VBO, EBO;
@@ -216,8 +216,10 @@ int main() {
 	}
 
 	//¹Û²ì¾ØÕó
-	glm::mat4 view(1.0f);
-	view = glm::translate(view, glm::vec3(0.4f, 0.4f, -2.0f));
+	float radius = 3.0f;
+	glm::vec3 camPos(0.0f), center(0.0f);
+	center.z = -3.5f;
+	glm::mat4 view = glm::lookAt(camPos, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	//Í¶Ó°¾ØÕó
 	glm::mat4 projection(1.0f);
@@ -231,22 +233,28 @@ int main() {
 		
 		float timeValue = glfwGetTime();
 
+		//¹Û²ì¾ØÕó
+		radius *= 1.0002f;
+		camPos.x = sin(timeValue * 3)*radius + center.x;
+		camPos.z = cos(timeValue * 3)*radius + center.z;
+		view = glm::lookAt(camPos, center, glm::vec3(0.0f, 1.0f, 0.0f));
+
 		//Ä£ÐÍ¾ØÕó
 		vector<glm::mat4>models;
 		glm::mat4 *tempTrans = new glm::mat4(1.0f);
-		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(1.0f, 0.0f, 0.0f));
-		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(0.0f, 1.0f, 0.0f));
+		//*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(1.0f, 0.0f, 0.0f));
+		//*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(0.0f, 1.0f, 0.0f));
 		*tempTrans = glm::translate(*tempTrans, glm::vec3(0.0f, 0.0f, -3.0f));
-		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(1.0f, 0.0f, 0.0f));
+		//*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(1.0f, 0.0f, 0.0f));
 		models.push_back(*tempTrans);
 
 		tempTrans = new glm::mat4(1.0f);
 		*tempTrans = glm::translate(*tempTrans, glm::vec3(0.0f, 0.0f, -4.0f));
 		float rot = sin(timeValue * 4) + 2;
 		*tempTrans = glm::scale(*tempTrans, glm::vec3(rot, rot, rot));
-		*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-		*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-		*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(0.0f, 1.0f, 0.0f));
+		//*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+		//*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		//*tempTrans = glm::rotate(*tempTrans, glm::radians(timeValue * 40), glm::vec3(0.0f, 1.0f, 0.0f));
 		models.push_back(*tempTrans);
 
 		for(int i = 0; i < shaders.size(); ++i){
