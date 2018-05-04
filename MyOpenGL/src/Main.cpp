@@ -15,11 +15,23 @@
 using namespace std;
 
 int windowHeight = 900, windowWidth = 900;
-float imageSize = 1,
+float
+	//mouse
+	MouseLastX = windowHeight / 2,
+	MouseLastY = windowWidth / 2,
+	pitch = 0.0f,
+	yaw = -3.14159265f / 2,
+
+	//texture
+	imageSize = 1,
 	mixPara = 0.2,
-	RealMoveSpeed = 0.001f,
-	RealTextureSpeed = 0.005f,
-	RealMixSpeed = 0.05f;
+
+	//speed
+	RealMoveSpeed = 5.0f,
+	RealTextureSpeed = 5.0f,
+	RealMixSpeed = 2.0f,
+	MouseXSpeed = 0.001f,
+	MouseYSpeed = 0.001f;
 float verPos[][3] = {
 	//上底面
 	0.5f, 0.5f, 0.5f,
@@ -68,6 +80,28 @@ float vertices[] = {
 glm::vec3 camPos(0.0f),
 	camFront(0.0f, 0.0f, -1.0f),
 	camUp(0.0f, 1.0f, 0.0f);
+
+void mouse_callback(GLFWwindow* window, double xPos, double yPos) {
+	//计算偏移量
+	yaw += (xPos - MouseLastX) * MouseXSpeed;
+	pitch += (MouseLastY - yPos) * MouseYSpeed;
+	MouseLastX = xPos;
+	MouseLastY = yPos;
+	//pitch = pitch - (pitch / 90) * 90;
+	//yaw = yaw - (yaw / 360) * 360;
+	if (pitch > 89) {
+		pitch = 89.0f;
+	}
+	else if (pitch < -89) {
+		pitch = -89.0f;
+	}
+
+	std::cout << pitch << ' ' << yaw << endl;
+
+	camFront.y = sin(pitch);
+	camFront.x = cos(pitch) * cos(yaw);
+	camFront.z = cos(pitch) * sin(yaw);
+}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -237,13 +271,21 @@ int main() {
 	glm::mat4 projection(1.0f);
 	projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / windowHeight, 0.1f, 100.0f);
 
+	//启用深度检测
 	glEnable(GL_DEPTH_TEST);
+	//设置鼠标监视
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
 
+	float lastTime = glfwGetTime(),
+		deltaTime = lastTime;
 	while(!glfwWindowShouldClose(window)) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		float timeValue = glfwGetTime();
+		float nowTime = glfwGetTime();
+		deltaTime = nowTime - lastTime;
+		lastTime = nowTime;
 
 		//观察矩阵
 		glm::mat4 view = glm::lookAt(camPos, camPos+camFront, camUp);
@@ -258,8 +300,8 @@ int main() {
 		models.push_back(*tempTrans);
 
 		tempTrans = new glm::mat4(1.0f);
-		*tempTrans = glm::translate(*tempTrans, glm::vec3(0.0f, 0.0f, -4.0f));
-		float rot = sin(timeValue * 4) + 2;
+		*tempTrans = glm::translate(*tempTrans, glm::vec3(0.0f, 0.0f, -3.5f));
+		float rot = sin(lastTime * 4) + 2;
 		*tempTrans = glm::scale(*tempTrans, glm::vec3(rot, rot, rot));
 		//*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 		//*tempTrans = glm::rotate(*tempTrans, 45.0f, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -272,7 +314,7 @@ int main() {
 			shaders[i].setFloat("mixPara", mixPara);
 
 			//颜色随时间变化
-			float colorTime = timeValue * 10;
+			float colorTime = lastTime * 10;
 			vector<float>nowColor;
 	        nowColor.push_back((sin(colorTime) / 2.0f) + 0.5f);
 	        nowColor.push_back((sin(colorTime/4) / 2.0f) + 0.5f);
@@ -304,7 +346,7 @@ int main() {
 		}
 
 		//非渲染处理
-		processInput(window, timeValue);
+		processInput(window, deltaTime);
 		glfwSwapBuffers(window);
 		glfwPollEvents();    
 	}
