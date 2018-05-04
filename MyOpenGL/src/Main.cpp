@@ -15,7 +15,11 @@
 using namespace std;
 
 int windowHeight = 900, windowWidth = 900;
-float imageSize = 1, mixPara = 0.2;
+float imageSize = 1,
+	mixPara = 0.2,
+	RealMoveSpeed = 0.001f,
+	RealTextureSpeed = 0.005f,
+	RealMixSpeed = 0.05f;
 float verPos[][3] = {
 	//上底面
 	0.5f, 0.5f, 0.5f,
@@ -28,17 +32,6 @@ float verPos[][3] = {
 	-0.5f, -0.5f, -0.5f,
 	-0.5f, 0.5f, -0.5f };
 float vertices[] = {
-	////上底面
-	//0.5f, 0.5f, 0.5f,  1.0f, 0.0f, 0.0f, imageSize, 0.0f,
-	//0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, imageSize, imageSize,
-	//-0.5f, -0.5f, 0.5f,1.0f, 0.0f, 0.0f,0.0f, imageSize,     
-	//-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,          
-	////下底面
-	//0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, imageSize, 0.0f,     
-	//0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,imageSize, imageSize,
-	//-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,0.0f, imageSize,     
-	//-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,0.0f, 0.0f,          
-
 	//使用索引缓冲
 	//位置				                           颜色	   				坐标
 	//第1个矩形
@@ -72,12 +65,18 @@ float vertices[] = {
 	verPos[4][0], verPos[4][1], verPos[4][2], 1.0f, 0.0f, 0.0f,  0.0f, imageSize,      // 左下角
 	verPos[0][0], verPos[0][1], verPos[0][2], 1.0f, 0.0f, 0.0f,  0.0f, 0.0f            // 左上角
 };
+glm::vec3 camPos(0.0f),
+	camFront(0.0f, 0.0f, -1.0f),
+	camUp(0.0f, 1.0f, 0.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow* window) {
+void processInput(GLFWwindow* window, float time) {
+	float FrameMoveSpeed = RealMoveSpeed * time,
+		FrameTextureSpeed = RealTextureSpeed * time + 1,
+		FrameMixSpeed = RealMixSpeed * time;
 	//使用空格停止程序
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
@@ -85,14 +84,14 @@ void processInput(GLFWwindow* window) {
 
 	//使用上下方向键控制纹理大小
 	if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-		imageSize *= 1.005f;
+		imageSize *= FrameTextureSpeed;
 		for (int i = 0; i < 6; ++i) {
 			vertices[6 + i * 32] = vertices[14 + i * 32] = vertices[15 + i * 32] = vertices[23 + i * 32] = imageSize;
 		}
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	}
 	if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
-		imageSize /= 1.005f;
+		imageSize /= FrameTextureSpeed;
 		for (int i = 0; i < 6; ++i) {
 			vertices[6 + i * 32] = vertices[14 + i * 32] = vertices[15 + i * 32] = vertices[23 + i * 32] = imageSize;
 		}
@@ -101,10 +100,26 @@ void processInput(GLFWwindow* window) {
 
 	//使用左右方向键控制mix参数
 	if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
-		mixPara += 0.005f;
+		mixPara += FrameMixSpeed;
 	}
 	if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
-		mixPara -= 0.005f;
+		mixPara -= FrameMixSpeed;
+	}
+
+	//控制位移
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+		camPos += glm::normalize(camFront) * FrameMoveSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		camPos -= glm::normalize(camFront) * FrameMoveSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+		glm::vec3 camRight = glm::normalize(glm::cross(camFront, camUp));
+		camPos += camRight * FrameMoveSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		glm::vec3 camRight = glm::normalize(glm::cross(camFront, camUp));
+		camPos -= camRight * FrameMoveSpeed;
 	}
 }
 
@@ -216,10 +231,7 @@ int main() {
 	}
 
 	//观察矩阵
-	float radius = 3.0f;
-	glm::vec3 camPos(0.0f), center(0.0f);
-	center.z = -3.5f;
-	glm::mat4 view = glm::lookAt(camPos, center, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 view = glm::lookAt(camPos, camPos+camFront, camUp);
 
 	//投影矩阵
 	glm::mat4 projection(1.0f);
@@ -234,10 +246,7 @@ int main() {
 		float timeValue = glfwGetTime();
 
 		//观察矩阵
-		radius *= 1.0002f;
-		camPos.x = sin(timeValue * 3)*radius + center.x;
-		camPos.z = cos(timeValue * 3)*radius + center.z;
-		view = glm::lookAt(camPos, center, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 view = glm::lookAt(camPos, camPos+camFront, camUp);
 
 		//模型矩阵
 		vector<glm::mat4>models;
@@ -295,7 +304,7 @@ int main() {
 		}
 
 		//非渲染处理
-		processInput(window);
+		processInput(window, timeValue);
 		glfwSwapBuffers(window);
 		glfwPollEvents();    
 	}
